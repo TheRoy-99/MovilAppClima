@@ -1,0 +1,46 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+*.~ # Archivos de respaldo temporales
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+# .pub-cache/ y .pub/ ya son ignorados globalmente por Flutter en la mayoría de los casos, pero no está mal tenerlos:
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Android Studio/Platform Specific
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/local.properties # <-- Añadir: Contiene rutas del SDK de tu máquina
+/android/.gradle # <-- Añadir: Cache de Gradle
+/ios/.symlinks # <-- Añadir: Enlaces simbólicos de iOS
+/ios/Pods/ # <-- Añadir: Dependencias de CocoaPods
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
