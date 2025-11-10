@@ -15,8 +15,10 @@ class ClimaApp extends StatefulWidget {
 class _ClimaApp extends State<ClimaApp> {
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  String latitud = "";
-  String longitud = "";
+  // Usar controllers para poder actualizar los valores dinámicamente
+  TextEditingController latitudController = TextEditingController();
+  TextEditingController longitudController = TextEditingController();
+
   String temperatura = "";
   bool permisoGPS = false;
 
@@ -61,6 +63,7 @@ class _ClimaApp extends State<ClimaApp> {
 
   Widget obtenerCampoLatitud() {
     return TextFormField(
+      controller: latitudController, // Usar controller en lugar de initialValue
       keyboardType: TextInputType.numberWithOptions(
         decimal: true,
         signed: true,
@@ -71,7 +74,6 @@ class _ClimaApp extends State<ClimaApp> {
         border: OutlineInputBorder(),
         prefixIcon: Icon(Icons.map),
       ),
-      initialValue: latitud,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return "La latitud es obligatoria";
@@ -85,14 +87,13 @@ class _ClimaApp extends State<ClimaApp> {
         }
         return null;
       },
-      onSaved: (value) {
-        this.latitud = value!;
-      },
     );
   }
 
   Widget obtenerCampoLongitud() {
     return TextFormField(
+      controller:
+          longitudController, // Usar controller en lugar de initialValue
       keyboardType: TextInputType.numberWithOptions(
         decimal: true,
         signed: true,
@@ -103,7 +104,6 @@ class _ClimaApp extends State<ClimaApp> {
         border: OutlineInputBorder(),
         prefixIcon: Icon(Icons.map),
       ),
-      initialValue: longitud,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return "La longitud es obligatoria";
@@ -117,9 +117,6 @@ class _ClimaApp extends State<ClimaApp> {
         }
         return null;
       },
-      onSaved: (value) {
-        this.longitud = value!;
-      },
     );
   }
 
@@ -127,7 +124,6 @@ class _ClimaApp extends State<ClimaApp> {
     return ElevatedButton.icon(
       onPressed: () {
         if (formKey.currentState!.validate()) {
-          formKey.currentState!.save();
           obtenerTemperatura();
         }
       },
@@ -181,17 +177,24 @@ class _ClimaApp extends State<ClimaApp> {
     } else {
       permisoGPS = true;
       Position pos = await Geolocator.getCurrentPosition();
-      setState(() {
-        latitud = pos.latitude.toString();
-        longitud = pos.longitude.toString();
-      });
+
+      // Actualizar los controllers con las coordenadas obtenidas
+      latitudController.text = pos.latitude.toString();
+      longitudController.text = pos.longitude.toString();
+
       mostrarMensaje("Ubicación obtenida exitosamente");
     }
   }
 
   Future<void> obtenerTemperatura() async {
-    double lat = double.parse(latitud);
-    double lon = double.parse(longitud);
+    // Leer directamente de los controllers
+    double? lat = double.tryParse(latitudController.text);
+    double? lon = double.tryParse(longitudController.text);
+
+    if (lat == null || lon == null) {
+      mostrarMensaje("Coordenadas inválidas");
+      return;
+    }
 
     // Validación de conectividad
     var conectividad = await Connectivity().checkConnectivity();
@@ -208,7 +211,6 @@ class _ClimaApp extends State<ClimaApp> {
   }
 
   Future<void> consultarAPIClima(double lat, double lon) async {
-    // URL
     String url =
         "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature";
 
@@ -217,8 +219,6 @@ class _ClimaApp extends State<ClimaApp> {
 
       if (respuesta.statusCode == 200) {
         var data = jsonDecode(respuesta.body);
-
-        // Acceder a "temperature"
         double temp = data["current"]["temperature"];
 
         setState(() {
@@ -231,7 +231,6 @@ class _ClimaApp extends State<ClimaApp> {
         });
       }
     } catch (e) {
-      // Si hay error de conexión, retornar el valor por defecto
       setState(() {
         temperatura =
             "Sin conexión a Internet\nTemperatura: 17 °C\n(Temperatura promedio en el planeta)";
@@ -243,5 +242,13 @@ class _ClimaApp extends State<ClimaApp> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(mensaje)));
+  }
+
+  @override
+  void dispose() {
+    // Liberar los controllers
+    latitudController.dispose();
+    longitudController.dispose();
+    super.dispose();
   }
 }
